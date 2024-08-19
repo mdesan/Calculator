@@ -14,16 +14,16 @@ public class Calculator {
     String ex = "";
     ArrayList<String> tokens = new ArrayList<>();
     Stack<String> operatorStack = new Stack<>();
-    Queue<String> outputQueue = new LinkedList<>();
+    static Queue<String> outputQueue = new LinkedList<>();
 
-    static HashMap<Character, Integer> map = new HashMap<>();
+    static HashMap<String, Integer> map = new HashMap<>();
 
     static {
-        map.put('^', 3);
-        map.put('/', 2);
-        map.put('*', 2);
-        map.put('+', 1);
-        map.put('-', 1);
+        map.put("^", 3);
+        map.put("/", 2);
+        map.put("*", 2);
+        map.put("+", 1);
+        map.put("-", 1);
     }
 
     double result;
@@ -69,6 +69,7 @@ public class Calculator {
         functionButtons[1] = subButton;
 
         mulButton = new JButton("*");
+
         functionButtons[2] = mulButton;
 
         divButton = new JButton("/");
@@ -141,93 +142,95 @@ public class Calculator {
 
     //methods for calculator logic
     public static ArrayList<String> toTokens(String ex, ArrayList<String> tokens) {
-
+    //(1+3.022)-7^2/50
         String x = "";
         for (int i = 0; i < ex.length(); i++) {
 
             if (Character.isDigit(ex.charAt(i)) || ex.charAt(i) == '.') {
                 x += ex.charAt(i);
-            } else {
-                if (x != "") {
+            }
+            else {
+                if (!x.equals("") ) {
                     tokens.add(x);
+                    x = "";
                 }
                 tokens.add(String.valueOf(ex.charAt(i)));
-                x = "";
             }
+        }
+        if(!x.equals("")) {
+            tokens.add(x);
         }
         return tokens;
     }
 
     //this method does the shunting yard algorithm.
-    public static Queue<String> infixToPostfix(Queue<String> outputQueue, Stack<String> operatorStack, HashMap<Character, Integer> map, ArrayList<String> tokens) {
+    public static Queue<String> infixToPostfix(Queue<String> outputQueue, Stack<String> operatorStack, HashMap<String, Integer> map, ArrayList<String> tokens) {
+        int i;
+        for (i = 0; i < tokens.size(); i++) {
 
-        for (int i = 0; i < tokens.size(); i++) {
+            String x = tokens.get(i);
+            char c = x.charAt(0);
 
-            if (Character.isDigit(tokens.get(i).charAt(0))) {
-                outputQueue.add(tokens.get(i));
-            }
-            else if (tokens.get(i).equals("(")) {
-                operatorStack.push(tokens.get(i));
-            }
-            else if (tokens.get(i).equals(")")) {
-                while (!operatorStack.peek().equals("(")) {
+            if (Character.isDigit(c)) {
+                outputQueue.add(x);
+            } else if (c == '(') {
+                operatorStack.push(x);
+            } else if (c == ')') {
+                while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(") ) {
                     outputQueue.add(operatorStack.pop());
                 }
                 operatorStack.pop();
-            }
-
-            else {
+            } else {
                 if (operatorStack.isEmpty()) {
-                    operatorStack.add(tokens.get(i));
+                    operatorStack.push(x);
                 }
                 else {
-                    if (map.get(tokens.get(i).charAt(0)) < map.get(operatorStack.peek().charAt(0))) {
-
+                    while (!operatorStack.isEmpty() && map.get(operatorStack.peek()) != null && map.get(x) <= map.get(operatorStack.peek())) {
                         outputQueue.add(operatorStack.pop());
-                        operatorStack.add(tokens.get(i));
-
                     }
-                    else {
-                        operatorStack.add(tokens.get(i));
-                    }
+                    operatorStack.push(x);
                 }
+
             }
 
         }
-        if (!operatorStack.isEmpty()) {
-            outputQueue.add(operatorStack.pop());
+        if(!operatorStack.isEmpty()){
+            while (!operatorStack.isEmpty()) {
+                outputQueue.add(operatorStack.pop());
+            }
         }
+
         return outputQueue;
     }
 
-
         public static void main (String[]args){
 
-             HashMap<Character, Integer> hmap = new HashMap<>();
+             HashMap<String, Integer> hmap = new HashMap<>();
 
 
-                hmap.put('^', 3);
-                hmap.put('/', 2);
-                hmap.put('*', 2);
-                hmap.put('+', 1);
-                hmap.put('-', 1);
+                hmap.put("^", 3);
+                hmap.put("/", 2);
+                hmap.put("*", 2);
+                hmap.put("+", 1);
+                hmap.put("-", 1);
 
             Stack<String> Stack = new Stack<>();
             Queue<String> Queue = new LinkedList<>();
 
-            String ex = "(1+3.022)-7^2/50";
+
+
+            String ex = "(1-1)*3-1.0";
 
             ArrayList<String> tokens = new ArrayList<>();
             tokens = toTokens(ex, tokens);
 
             System.out.println(tokens);
 
-            System.out.println(tokens.get(0).charAt(0));
 
 
+            Queue = infixToPostfix(Queue, Stack, hmap, tokens);
 
-            System.out.println(infixToPostfix(Queue, Stack, hmap, tokens));
-
+            System.out.println(Queue);
 
         }
     }
