@@ -1,10 +1,14 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 public class Calculator {
     JFrame frame;
     JTextArea textArea;
+    Font font = new Font("Calculator", Font.PLAIN,30);
+    JScrollPane scrollPane;
     JPanel topPanel;
     JPanel botPanel;
     JButton[] numberButtons = new JButton[10];
@@ -14,7 +18,8 @@ public class Calculator {
     String ex = "";
     ArrayList<String> tokens = new ArrayList<>();
     Stack<String> operatorStack = new Stack<>();
-    static Queue<String> outputQueue = new LinkedList<>();
+     Stack<Double> evStack = new Stack<>();
+    Queue<String> outputQueue = new LinkedList<>();
 
     static HashMap<String, Integer> map = new HashMap<>();
 
@@ -28,28 +33,42 @@ public class Calculator {
 
     double result;
 
-
     Calculator() {
 
         //creating the frame
         frame = new JFrame("Calculator");
         frame.setLayout(null);
 
+
         //top panel and text area
         textArea = new JTextArea();
+        textArea.setFont(font);
         textArea.setBackground(frame.getContentPane().getBackground());
-        topPanel = new JPanel();
-        topPanel.setBounds(10, 8, 330, 170);
-        topPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        topPanel.add(textArea);
+//        textArea.setPreferredSize(new Dimension(320,160));
 
-        frame.add(topPanel);
+        textArea.setCaretPosition(0);
+
+
+        scrollPane = new JScrollPane(textArea);
+        scrollPane.setBounds(10, 8, 330, 170);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+//        topPanel = new JPanel(new BorderLayout());
+//        topPanel.setBounds(10, 8, 330, 170);
+//        topPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+//        topPanel.add(textArea);
+
+
+//        topPanel.add(scrollPane, BorderLayout.CENTER);
+        frame.add(scrollPane);
 
         //bottom panel and gridlayout
 
         botPanel = new JPanel();
         botPanel.setLayout(new GridLayout(6, 4, 20, 20));
         botPanel.setBounds(10, 185, 330, 370);
+
 //        botPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         frame.add(botPanel);
 
@@ -59,48 +78,174 @@ public class Calculator {
             numberButtons[i].setBackground(Color.WHITE);
             numberButtons[i].setFocusable(false);
 
+            int finalI = i;
+            numberButtons[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent) {
+                    textArea.append(numberButtons[finalI].getText());
+                    ex += numberButtons[finalI].getText();
+                }
+            });
         }
 
-        //function buttons
+
+        //function buttons----------------------------------------------------
+
+        //addition button
         addButton = new JButton("+");
         functionButtons[0] = addButton;
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(addButton.getText());
+                ex += "+";
+            }
+        });
 
+        //subtraction button
         subButton = new JButton("-");
         functionButtons[1] = subButton;
+        subButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(subButton.getText());
+                ex += "-";
+            }
+        });
 
+        //multiplication button
         mulButton = new JButton("*");
-
         functionButtons[2] = mulButton;
+        mulButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(mulButton.getText());
+                ex += "*";
+            }
+        });
 
+        //divide button
         divButton = new JButton("/");
         functionButtons[3] = divButton;
+        divButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(divButton.getText());
+                ex += "/";
+            }
+        });
 
         negButton = new JButton("(-)");
         functionButtons[4] = negButton;
 
+        //equals button
         eqlButton = new JButton("=");
         functionButtons[5] = eqlButton;
+        eqlButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+
+                operatorStack.clear();
+                result = 0;
+                tokens.clear();
+                outputQueue.clear();
+                evStack.clear();
+
+                tokens = toTokens(ex,tokens);
+                result = evaluator(infixToPostfix(outputQueue,operatorStack,map,tokens), evStack);
+                textArea.append("\n");
+                textArea.append("                        " + result);
+                textArea.append("\n");
+                ex = "";
+
+            }
+        });
 
         lpButton = new JButton("(");
         functionButtons[6] = lpButton;
+        lpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(lpButton.getText());
+                ex += "(";
+            }
+        });
 
         rpButton = new JButton(")");
         functionButtons[7] = rpButton;
+        rpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(rpButton.getText());
+                ex += ")";
+            }
+        });
 
         clrButton = new JButton("C");
         functionButtons[8] = clrButton;
+        clrButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ex = "";
+                tokens.clear();
+                evStack.clear();
+                textArea.setText("");
+
+            }
+        });
 
         decButton = new JButton(".");
         functionButtons[9] = decButton;
+        decButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(decButton.getText());
+                ex += ".";
+            }
+        });
 
         ansButton = new JButton("A");
         functionButtons[10] = ansButton;
+        ansButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+
+                if(Math.floor(result)==result){
+                    ex += String.valueOf((int)Math.floor(result));
+                    textArea.append(String.valueOf((int)Math.floor(result)));
+                }
+                else {
+                    ex += String.valueOf(result);
+                    textArea.append(String.valueOf(result));
+                }
+            }
+        });
 
         exButton = new JButton("^");
         functionButtons[11] = exButton;
+        exButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append(exButton.getText());
+                ex += "^";
+            }
+        });
 
         delButton = new JButton("<-");
         functionButtons[12] = delButton;
+        delButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if(!ex.equals("")){
+                    ex = ex.substring(0,ex.length()-1);
+                    textArea.setText(textArea.getText().substring(0, textArea.getText().length()-1));
+                }
+            }
+        });
+
+        for(int i=0; i< functionButtons.length;i++){
+            functionButtons[i].setFocusable(false);
+        }
 
         //adding the buttons to the panel
         botPanel.add(numberButtons[7]);
@@ -203,6 +348,67 @@ public class Calculator {
         return outputQueue;
     }
 
+    //method for evaluating the postfix expression.
+    public static double evaluator(Queue<String> outputQueue, Stack<Double> evStack){
+
+        double num1;
+        double num2;
+
+        while(!outputQueue.isEmpty()) {
+            if (Character.isDigit(outputQueue.peek().charAt(0))) {
+                evStack.push(Double.parseDouble(outputQueue.poll()));
+
+            }
+            else {
+
+                num2 = evStack.pop();
+                num1 = evStack.pop();
+                switch (outputQueue.peek()) {
+                    case "+":
+
+                        evStack.push(num1 + num2);
+                        outputQueue.poll();
+                        break;
+
+                    case "-":
+
+                        evStack.push(num1 - num2);
+                        outputQueue.poll();
+                        break;
+
+                    case "*":
+
+                        evStack.push(num1 * num2);
+                        outputQueue.poll();
+                        break;
+
+                    case "/":
+
+                        evStack.push(num1 / num2);
+                        outputQueue.poll();
+                        break;
+
+                    case "^":
+
+                        evStack.push(Math.pow(num1, num2));
+                        outputQueue.poll();
+                        break;
+                }
+            }
+        }
+
+        return evStack.pop();
+    }
+
+//    public void clearEverything(){
+//        this.operatorStack.clear();
+//        this.result = 0;
+//        this.tokens.clear();
+//        this.outputQueue.clear();
+//        this.evStack.clear();
+//        this.ex = "";
+//    }
+
         public static void main (String[]args){
 
              HashMap<String, Integer> hmap = new HashMap<>();
@@ -217,20 +423,12 @@ public class Calculator {
             Stack<String> Stack = new Stack<>();
             Queue<String> Queue = new LinkedList<>();
 
-
-
-            String ex = "(1-1)*3-1.0";
+            String ex = "(8+2)^(2+0)-10";
 
             ArrayList<String> tokens = new ArrayList<>();
             tokens = toTokens(ex, tokens);
 
-            System.out.println(tokens);
 
-
-
-            Queue = infixToPostfix(Queue, Stack, hmap, tokens);
-
-            System.out.println(Queue);
 
         }
     }
