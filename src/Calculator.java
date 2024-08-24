@@ -88,7 +88,6 @@ public class Calculator {
             });
         }
 
-
         //function buttons----------------------------------------------------
 
         //addition button
