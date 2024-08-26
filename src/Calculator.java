@@ -12,23 +12,24 @@ public class Calculator {
     JPanel topPanel;
     JPanel botPanel;
     JButton[] numberButtons = new JButton[10];
-    JButton[] functionButtons = new JButton[13];
-    JButton addButton, subButton, mulButton, divButton, negButton, eqlButton, rpButton, lpButton, decButton, clrButton, ansButton, exButton, delButton;
-    Character negSign;
+    JButton[] functionButtons = new JButton[14];
+    JButton addButton, subButton, mulButton, divButton, negButton,
+            eqlButton, rpButton, lpButton, decButton, clrButton, ansButton, exButton, delButton,dmButton;
+    static final String minusSign = "–";
     String ex = "";
     ArrayList<String> tokens = new ArrayList<>();
     Stack<String> operatorStack = new Stack<>();
      Stack<Double> evStack = new Stack<>();
     Queue<String> outputQueue = new LinkedList<>();
 
-    static HashMap<String, Integer> map = new HashMap<>();
+    HashMap<String, Integer> map = new HashMap<>();
 
-    static {
+    {
         map.put("^", 3);
         map.put("/", 2);
         map.put("*", 2);
         map.put("+", 1);
-        map.put("-", 1);
+        map.put(minusSign, 1);
     }
 
     double result;
@@ -102,13 +103,13 @@ public class Calculator {
         });
 
         //subtraction button
-        subButton = new JButton("-");
+        subButton = new JButton(String.valueOf(minusSign));
         functionButtons[1] = subButton;
         subButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                textArea.append(subButton.getText());
-                ex += "-";
+                textArea.append(minusSign);
+                ex += minusSign;
             }
         });
 
@@ -136,6 +137,14 @@ public class Calculator {
 
         negButton = new JButton("(-)");
         functionButtons[4] = negButton;
+        negButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                textArea.append("-");
+                ex += "-";
+            }
+        });
+
 
         //equals button
         eqlButton = new JButton("=");
@@ -144,18 +153,33 @@ public class Calculator {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
 
-                operatorStack.clear();
-                result = 0;
-                tokens.clear();
-                outputQueue.clear();
-                evStack.clear();
+                try{
+                    operatorStack.clear();
+                    result = 0;
+                    tokens.clear();
+                    outputQueue.clear();
+                    evStack.clear();
 
-                tokens = toTokens(ex,tokens);
-                result = evaluator(infixToPostfix(outputQueue,operatorStack,map,tokens), evStack);
-                textArea.append("\n");
-                textArea.append("                        " + result);
-                textArea.append("\n");
-                ex = "";
+                    tokens = toTokens(ex,tokens);
+                    result = evaluator(infixToPostfix(outputQueue,operatorStack,map,tokens), evStack);
+                    textArea.append("\n");
+                    textArea.append("                        " + result);
+                    textArea.append("\n");
+                    ex = "";
+                } catch (EmptyStackException e) {
+
+                    operatorStack.clear();
+                    result = 0;
+                    tokens.clear();
+                    outputQueue.clear();
+                    evStack.clear();
+
+                    textArea.append("\n");
+                    textArea.append("               Syntax Error");
+                    textArea.append("\n");
+                    ex = "";
+                }
+
 
             }
         });
@@ -242,6 +266,17 @@ public class Calculator {
             }
         });
 
+        dmButton = new JButton("DM");
+        functionButtons[13] = dmButton;
+        dmButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+
+            }
+        });
+
+
+
         for(int i=0; i< functionButtons.length;i++){
             functionButtons[i].setFocusable(false);
         }
@@ -275,6 +310,7 @@ public class Calculator {
         botPanel.add(exButton);
         botPanel.add(ansButton);
         botPanel.add(delButton);
+        botPanel.add(dmButton);
 
 
         frame.setSize(350, 600);
@@ -290,7 +326,7 @@ public class Calculator {
         String x = "";
         for (int i = 0; i < ex.length(); i++) {
 
-            if (Character.isDigit(ex.charAt(i)) || ex.charAt(i) == '.') {
+            if (Character.isDigit(ex.charAt(i)) || ex.charAt(i) == '.'|| ex.charAt(i)=='-') {
                 x += ex.charAt(i);
             }
             else {
@@ -315,7 +351,7 @@ public class Calculator {
             String x = tokens.get(i);
             char c = x.charAt(0);
 
-            if (Character.isDigit(c)) {
+            if (Character.isDigit(c) || x.charAt(0)=='-') {
                 outputQueue.add(x);
             } else if (c == '(') {
                 operatorStack.push(x);
@@ -354,7 +390,7 @@ public class Calculator {
         double num2;
 
         while(!outputQueue.isEmpty()) {
-            if (Character.isDigit(outputQueue.peek().charAt(0))) {
+            if (Character.isDigit(outputQueue.peek().charAt(0)) || outputQueue.peek().charAt(0)=='-') {
                 evStack.push(Double.parseDouble(outputQueue.poll()));
 
             }
@@ -369,7 +405,7 @@ public class Calculator {
                         outputQueue.poll();
                         break;
 
-                    case "-":
+                    case minusSign:
 
                         evStack.push(num1 - num2);
                         outputQueue.poll();
@@ -426,8 +462,6 @@ public class Calculator {
 
             ArrayList<String> tokens = new ArrayList<>();
             tokens = toTokens(ex, tokens);
-
-
 
         }
     }
